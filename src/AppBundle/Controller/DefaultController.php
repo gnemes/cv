@@ -52,8 +52,22 @@ class DefaultController extends Controller
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            // TODO :: Handle message submission
-            // echo var_dump($message);
+
+            $message = \Swift_Message::newInstance()
+                ->setSubject('Someone is looking at you!')
+                ->setFrom('info@gnemes.com.ar')
+                ->setTo('gnemes@gmail.com')
+                ->setBody(
+                    $this->renderView(
+                        // app/Resources/views/Emails/registration.html.twig
+                        'Emails/contact.html.twig',
+                        array('name' => $name)
+                    ),
+                    'text/html'
+                )
+            ;
+            $this->get('mailer')->send($message);
+            
             $messageDelivered = true;
         } else {
             $messageDelivered = false;
