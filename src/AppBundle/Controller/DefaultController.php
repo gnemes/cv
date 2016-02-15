@@ -61,7 +61,9 @@ class DefaultController extends Controller
                     $this->renderView(
                         'Emails/contact.html.twig',
                         array(
-                            "name" => $name
+                            "name" => $message->getName(),
+                            "email" => $message->getEmail(),
+                            "message" => $message->getMessage()
                         )
                     ),
                     'text/html'
