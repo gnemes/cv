@@ -53,20 +53,21 @@ class DefaultController extends Controller
 
         if ($form->isSubmitted() && $form->isValid()) {
 
-            $message = \Swift_Message::newInstance()
-                ->setSubject('Someone is looking at you!')
+            $m = \Swift_Message::newInstance()
+                ->setSubject('Info')
                 ->setFrom('info@gnemes.com.ar')
                 ->setTo('gnemes@gmail.com')
                 ->setBody(
                     $this->renderView(
                         'Emails/contact.html.twig',
                         array(
+                            "name" => $name
                         )
                     ),
                     'text/html'
                 )
             ;
-            $this->get('mailer')->send($message);
+            $this->get('mailer')->send($m);
             
             $messageDelivered = true;
         } else {
