@@ -53,7 +53,7 @@ class DefaultController extends Controller
 
         if ($form->isSubmitted() && $form->isValid()) {
 
-            $emailHandler = \Swift_Message::newInstance()
+            $message = \Swift_Message::newInstance()
                 ->setSubject('Someone is looking at you!')
                 ->setFrom('info@gnemes.com.ar')
                 ->setTo('gnemes@gmail.com')
@@ -61,15 +61,12 @@ class DefaultController extends Controller
                     $this->renderView(
                         'Emails/contact.html.twig',
                         array(
-                            'name' => "Laputa quete",
-                            'email' => "remilpario@forrodemierda.com",
-                            'message' => "Por que mierda no andas"
                         )
                     ),
                     'text/html'
                 )
             ;
-            $this->get('mailer')->send($emailHandler);
+            $this->get('mailer')->send($message);
             
             $messageDelivered = true;
         } else {
