@@ -53,7 +53,7 @@ class DefaultController extends Controller
 
         if ($form->isSubmitted() && $form->isValid()) {
 
-            $message = \Swift_Message::newInstance()
+            $emailHandler = \Swift_Message::newInstance()
                 ->setSubject('Someone is looking at you!')
                 ->setFrom('info@gnemes.com.ar')
                 ->setTo('gnemes@gmail.com')
@@ -69,7 +69,7 @@ class DefaultController extends Controller
                     'text/html'
                 )
             ;
-            $this->get('mailer')->send($message);
+            $this->get('mailer')->send($emailHandler);
             
             $messageDelivered = true;
         } else {
