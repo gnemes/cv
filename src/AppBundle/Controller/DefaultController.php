@@ -59,9 +59,12 @@ class DefaultController extends Controller
                 ->setTo('gnemes@gmail.com')
                 ->setBody(
                     $this->renderView(
-                        // app/Resources/views/Emails/registration.html.twig
                         'Emails/contact.html.twig',
-                        array('name' => $name)
+                        array(
+                            'name' => $message->getName(),
+                            'email' => $message->getEmail(),
+                            'message' => $message->getMessage()
+                        )
                     ),
                     'text/html'
                 )

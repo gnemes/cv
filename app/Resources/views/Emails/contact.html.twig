@@ -1,7 +1,9 @@
 {# app/Resources/views/Emails/registration.html.twig #}
-<h3>Someone has contact you!</h3>
+<h2>Someone has contact you!</h2>
 
-{# example, assuming you have a route named "login" #}
-To login, go to: <a href="#">...</a>.
+<p>Cuando: {{ "now"|date("m/d/Y H:i:s") }}</p>
+<p>Nombre: {{name}}</p>
+<p>Email: {{email}}</p>
+<p>Message: {{message}}</p>
 
-Thanks!
+End.
