@@ -1,0 +1,41 @@
+{% extends 'BlogBundle::base.html.twig' %}
+
+{% block body %}
+<div class="single">
+    <div class="container">
+        <div class="col-md-8 single-main">
+            {% block post %}
+                
+            {% endblock %}
+            
+            <ul class="comment-list">
+                <h5 class="post-author_head">Escrito por Gnemes</h5>
+                <li>
+                    <img src="{{ asset('img/profile.png') }}" class="img-responsive" alt="German Nemes">
+                    
+                    <div class="desc">
+                        <p>PHP Developer</p>
+                    </div>
+                    
+                    <div class="clearfix"></div>
+                </li>
+            </ul>
+                    
+            <!--        
+            <div class="content-form">
+                <h3>Leave a comment</h3>
+                <form>
+                    <input type="text" placeholder="Name" required/>
+                    <input type="text" placeholder="Email" required/>
+                    <input type="text" placeholder="Phone" required/>
+                    <textarea placeholder="Message"></textarea>
+                    <input type="submit" value="SEND"/>
+                </form>
+            </div>
+            -->
+            
+        </div>
+        {{ include('BlogBundle::Default/right.html.twig') }}
+    </div>
+</div>
+{% endblock %}

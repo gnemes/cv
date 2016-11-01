@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Germ&aacute;n Nemes | Blog</title>
+        <!-- Bootstrap core CSS -->
+        <link rel="stylesheet" href="{{ asset('css/bootstrap.min.css') }}">
+
+        <link href="{{ asset('css/style.css') }}" rel='stylesheet' type='text/css' />
+
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <meta name="keywords" content="Gnemes German Nemes Blog"/>
+        
+        <!----webfonts---->
+        <link href='http://fonts.googleapis.com/css?family=Oswald:100,400,300,700' rel='stylesheet' type='text/css'>
+        <link href='http://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,300italic' rel='stylesheet' type='text/css'>
+        <!----//webfonts---->
+
+        <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+        <!--end slider -->
+
+        {% block styles %}
+        {% endblock %} 
+    </head>
+    <body>
+        {% block header %}
+        <div class="header">  
+            <div class="container">
+                <div class="logo">
+                    <a href="{{ path('blog') }}">
+                        <img src="{{ asset('img/logo.jpg') }}" title="" />
+                    </a>
+                </div>
+            </div>
+        </div>    
+        {% endblock %}
+        
+        {% block body %}
+        {% endblock %}
+
+        {% block scripts %}
+        {% endblock %}
+        
+        {% block footer %}
+        <div class="footer">
+            <div class="container">
+                <p>Copyrights © 2015 Blog All rights reserved | Template by <a href="http://w3layouts.com/">W3layouts</a></p>
+            </div>
+        </div>            
+        {% endblock %}
+    </body>
+</html>

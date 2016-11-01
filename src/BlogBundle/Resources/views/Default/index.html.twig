@@ -1,0 +1,20 @@
+{% extends 'BlogBundle::base.html.twig' %}
+
+{% block body %}
+<div class="content">
+    <div class="container">
+        <div class="content-grids">
+            <div class="col-md-8 content-main">
+                <div class="content-grid">
+                    
+                    <!-- interface preference begins -->
+                    {{ include('BlogBundle::Default/posts/preview/interfacepreference.html.twig') }}
+                    <!-- interface preference ends -->
+                    
+                </div>
+            </div>
+            {{ include('BlogBundle::Default/right.html.twig') }}
+        </div>
+    </div>
+</div>
+{% endblock %}
