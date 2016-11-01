@@ -2,8 +2,242 @@
 
 {% block post %}
 <div class="single-grid">
-    <img src="{{ asset('img/posts/preference.jpg') }}" alt="Preferencias sobre interfaces"/>						 					 
+    <img src="{{ asset('img/posts/preference.jpg') }}" alt="Preferencias sobre interfaces"/>
     <p>
+        <h3>Magento 2 - Preferencias sobre interfaces</h3>
     </p>
+    <p>
+        Magento 2 es un mundo nuevo para todos los desarrolladores, y aun un año 
+        despues de su lanzamiento, continuamos aprendiendo sobre el. Llevo varios meses y un par 
+        de proyectos trabajando sobre Magento 2, y al dia de hoy sigo en la etapa de descubrimiento, 
+        formandome ideas sobre cual es la mejor manera de hacer ciertas cosas.
+    </p>
+    <p>
+        Magento 2 incorpora los Plugins, que permiten agregar funcionalidad a
+        clases existentes, sin la necesidad de reescribirlas. Este es por ejemplo
+        un punto en que estoy intentando formarme una
+        idea sobre cual solucion es mejor. ¿Conviene usar plugins por sobre rewrites (preferences en Magento 2)?
+        ¿En que casos conviene usar cada tecnica?        
+    </p>
+    <p>
+        En lo personal, y esto es puramente una opinion personal basada unicamente
+        en mi experiencia con Magento 2,
+        el problema que le encuentro a los Plugins es la trazabilidad. En proyectos
+        grandes y que se prolongan en el tiempo, donde el equipo de desarrollo es relativamente
+        grande y va cambiando al transcurrir los meses, los Plugins me generaron 
+        problemas al ver que funcionalidad que estaba haciendo no andaba, y comenzaban
+        a aparecer clases Interceptor (clases que Magento 2 genera para manejar los Plugins)
+        que no tenia idea de donde venian. Esto no quiere decir que soy un anti-Plugins,
+        y que hay que exorcizarlos del codigo. Los uso, y los uso bastante,
+        pero trato de utilizarlos a conciencia y cuando hacer un rewrite implica
+        replicar demasiado codigo sin sentido.
+    </p>
+    <p>
+        En este post no voy a hablar de como crear un Plugin o una Preference, sino que 
+        quiero mostrar una particularidad con la que me encontre al trabajar con Preferences.
+        Quizas lo que voy a desarrollar en el post resulte obvio para muchos, pero
+        a mi me tuvo varias horas agarrandome la cabeza hasta que entendi que estaba
+        sucediendo. Para mostrar mi ejemplo, voy a desarrollar un feature sin mucho sentido,
+        pero que a fines didacticos cumple con su objetivo.
+    </p>
+    <p>
+        <h4>Vamos al ejemplo...</h4>
+    </p>    
+    <p>
+        Supongamos que por un misterio de la vida nos llega de parte de un cliente
+        un requerimiento para hacer que el nombre de todos los productos se muestre
+        siempre como <strong>"Gnemes Blog :: " + el nombre del producto</strong>. Requerimiento extraño...
+        pero esas cosas pasan.
+    </p>
+    <p>
+        Entonces vamos al modelo de productos:
+    </p>
+    <pre><code class="Bash">
+        \Magento\Catalog\Model\Product
+    </code></pre>
+    <p>
+        Y vemos que tiene un metodo getName():
+    </p>
+    <pre><code class="PHP">
+    public function getName()
+    {
+        return $this->_getData(self::NAME);
+    }        
+    </code></pre>
+    <p>
+        Genial! En este punto, es muy claro que podriamos usar un Plugin sin ningun problema,
+        pero como estamos analizando las Preferences, hagamoslo con un rewrite. Creamos un modulo bien simple:
+    </p>
+    <pre><code class="Bash">
+    Gnemes
+        └── Blog
+            ├── etc
+            │   ├── di.xml
+            │   └── module.xml
+            ├── registration.php
+            └── Rewrite
+                └── Magento
+                    └── Catalog
+                        └── Model
+                            └── Product.php
+    </code></pre>
+    <p>
+        Como somos desarrolladores prolijos, vamos a crear la preferencia usando la interfaz del modelo
+        de productos, entonces compleamos nuestro <strong>di.xml</strong> con lo siguiente:
+    </p>
+    <pre><code class="XML">
+    &lt;?xml version="1.0"?&gt;
+    &lt;config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+            xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd"&gt;
+
+        &lt;preference for="Magento\Catalog\Api\Data\ProductInterface"
+                    type="Gnemes\Blog\Rewrite\Magento\Catalog\Model\Product" /&gt;
+
+    &lt;/config&gt;
+    </code></pre>    
+    <p>
+        Y el codigo de nuestra nueva clase Product es bastante simple:
+    </p>
+    <pre><code class="PHP">
+    namespace Gnemes\Blog\Rewrite\Magento\Catalog\Model;
+
+    class Product
+        extends \Magento\Catalog\Model\Product
+        implements \Magento\Catalog\Api\Data\ProductInterface
+    {
+        /**
+         * Get product name
+         *
+         * @return string
+         * @codeCoverageIgnoreStart
+         */
+        public function getName()
+        {
+            return "Gnemes Blog :: ".$this->_getData(self::NAME);
+        }    
+    }    
+    </code></pre>
+    <p>
+        Listo!! Estamos a solo un F5 de completar nuestro requerimiento y... NO ANDA! Los productos muestran el nombre
+        sin nuestro agregado. ¿¿Que paso??
+    </p>
+    <p>
+        <h4>¿Que paso?</h4>
+    </p> 
+    <p>
+        Cuando comence a trabajar con Magento 2 y su inyeccion de dependencias,
+        me encontre con muchisimos constructores de clase que recibian como 
+        parametro una interfaz en lugar de una clase. Esto me parecio genial,
+        ya que en definitiva, lo que conocemos de un modulo desarrollado por terceros
+        (o lo unico que deberiamos conocer) es su capa de service contract, o sea, las
+        interfaces que implementa. Si el dia de mañana deciden cambiar la implementacion
+        utilizando otra clase, pero mantienen compatibilidad al utilizar la misma
+        interfaz declarada en el service contract, todo codigo deberia seguir funcionando
+        sin problemas.
+    </p>
+    <p>
+        Hasta hace poco creia que si colocaba una Preference sobre una interfaz,
+        Magento 2 automaticamente iba a detectar cada vez que necesitaba instanciar
+        una clase, que interfaces implementa e instanciar la clase que corresponde
+        de acuerdo a las preferencias existentes. Pero como vimos en el ejemplo, 
+        esto no siempre funciona de esa manera.
+    </p>
+    <p>
+        El problema surge, hasta donde pude investigar por ahora, con los <strong>factories
+        autogenerados por Magento 2</strong> y con las <strong>Collections</strong>.
+    </p>
+    <p>
+        <h4>Collections</h4>
+    </p> 
+    <p>
+        Las collections implementan un metodo protected <strong>_construct()</strong>. En dicho metodo
+        se inicializa la colletion con la definicion del model y el resourceModel del cual
+        va a obtener los datos y popular objetos. En el caso de nuestro ejemplo la collection es:
+    </p>
+    <pre><code class="Bash">
+    \Magento\Catalog\Model\ResourceModel\Product\Collection
+    </code></pre>    
+    <p>
+        y el codigo del metodo <strong>_construct()</strong> es:
+    </p>
+    
+    <pre><code class="PHP">
+    /**
+     * Initialize resources
+     *
+     * @return void
+     */
+    protected function _construct()
+    {
+        if ($this->isEnabledFlat()) {
+            $this->_init('Magento\Catalog\Model\Product', 'Magento\Catalog\Model\ResourceModel\Product\Flat');
+        } else {
+            $this->_init('Magento\Catalog\Model\Product', 'Magento\Catalog\Model\ResourceModel\Product');
+        }
+        $this->_initTables();
+    }    
+    </code></pre>
+    <p>
+        Si pudiesemos reemplazar:
+    </p>
+    <pre><code class="Bash">
+    Magento\Catalog\Model\Product
+    </code></pre>    
+    <p>
+        por
+    </p>
+    <pre><code class="Bash">
+    Gnemes\Blog\Rewrite\Magento\Catalog\Model\Product
+    </code></pre>
+    <p>
+        el codigo funcionaria perfectamente. Los parametros enviados al metodo <strong>_init()</strong> no 
+        pasan por el ObjectManager (objeto que resuelve la inyeccion de dependencias) y por
+        ende, no es posible colocar la interfaz que implementa el objeto en lugar de la clase
+        del objeto en si. Quizas seria bueno que esto se pueda hacer en alguna version futura de Magento 2!
+    </p>
+    <p>
+        <h4>Factories</h4>
+    </p>
+    <p>
+        Los Factories autogenerados por Magento 2, son el otro punto en donde me tope con el mismo problema.
+        El ObjectManager permite que se inyecte en un constructor algo como lo siguiente:
+    </p>
+    <pre><code class="PHP">
+    public function __construct(
+        \Magento\Catalog\Model\ProductFactory $productFactory
+    ){
+        $this->productFactory = $productFactory;
+        ...
+    }
+    </code></pre>
+    <p>
+        ¿Que nos permite esto? Crear N objetos <strong>\Magento\Catalog\Model\Product</strong>
+        simplemente pidiendole al Factory que lo cree:
+    </p>
+    <pre><code class="PHP">
+    public function miMetodo()
+    {
+        ...
+        $product = $this->productFactory->create();
+        ...
+    }
+    </code></pre>
+    <p>
+        Muy facil!! Pero... cuando voy a buscar la clase factory a:
+    </p>
+    <pre><code class="Bash">
+    module-catalog
+        └── Model
+            └── ProductFactory.php
+    </code></pre>
+    <p>
+        No existe! Pero el sitio anda... ¿De donde salio la clase?. Magento 2 crea automaticamente los Factories
+        necesarios dentro de la carpeta:
+    </p>
+    <pre><code class="Bash">
+    var
+     └── Generation
+           └── &lt;Namespace_de_la_clase&gt;
+    </code></pre>
 </div>
 {% endblock %}    
