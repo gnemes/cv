@@ -1,0 +1,81 @@
+<section id="page-contact" class="page-contact">
+    <div class="container">
+        <header class="section-header">
+            <h2 class="section-title">
+                <span>Contact</span>
+            </h2>
+            <div class="spacer"></div>
+            <p class="section-subtitle">
+                Don't hesitate to contact me!
+            </p>
+        </header>
+        <div class="row">
+            <div class="col-sm-4">
+                <h3>General</h3>
+                <p>I will be happy to answer you as soon as possible</p>
+                <p>I check my cell phone daily </p>
+                <p>So I will respond to your message within 24 hours</p>
+            </div>
+
+            <div class="col-sm-4 contact-info">
+                <h3>Contact Info</h3>
+                <p>
+                    <i class="fa fa-map-marker"></i>
+                    Villa del Parque, Capital Federal, Buenos Aires, Argentina 
+                </p>
+                <p>
+                    <i class="fa fa-phone"></i> 
+                    (11) 5514-4685 
+                </p>
+                <p>
+                    <i class="fa fa-envelope-o"></i> 
+                    <a href="mailto:gnemes@gmail.com">gnemes@gmail.com</a>
+                </p>
+            </div>
+
+            <div class="col-sm-4">
+                <h3>Get in Touch</h3>
+
+                {% if messageDelivered == true %}
+                <div class="alert alert-success" role="alert">
+                    Thank you very much! Your message has been sent.
+                </div>
+                {% endif %}
+
+                {{ form_start(form) }}
+
+                <div class="control-group">
+                    {{ form_label(form.name, 'Name', {'label_attr': {'class': 'control-label'}}) }}
+                    <div class="controls">
+                            {{ form_row(form.name, { 'attr': {'class': 'form-control input-lg', 'placeholder': 'Your Name'} }) }}
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    {{ form_label(form.email, 'Email', {'label_attr': {'class': 'control-label'}}) }}
+                    <div class="controls">
+                            {{ form_row(form.email, { 'attr': {'class': 'form-control input-lg', 'placeholder': 'Your Email'} }) }}
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    {{ form_label(form.message, 'Message', {'label_attr': {'class': 'control-label'}}) }}
+                    <div class="controls">
+                            {{ form_row(form.message, { 'attr': {'class': 'form-control input-lg', 'placeholder': 'Your Message'} }) }}
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <div id="success"></div>
+                    {{ form_row(form.save, { 'label': 'Submit Message', 'attr': {'class': 'btn btn-default btn-lg btn-block'}}) }}
+                </div>    
+
+                {{ form_rest(form) }}
+                {{ form_end(form) }}
+                <!-- End contact-form -->
+            </div>
+        </div>
+        <!-- End row -->
+
+    </div>
+</section>
