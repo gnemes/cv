@@ -5,7 +5,12 @@
             <a href="{{ path('blog_post', {'id': 1}) }}">
                 Magento 2 - Preferencias sobre interfaces
             </a>  
-            Noviembre 01, 2016
+            {% if comments.1 is defined %}
+            {%    set c = comments.1 %}    
+            {% else %}
+            {%    set c = 0 %}    
+            {% endif %}    
+            2016/11/01 - {{c}} comentarios
         </h4>
         <p>
             Magento 2 es todo un nuevo mundo por descubrir. En este post queria 

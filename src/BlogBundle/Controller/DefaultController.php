@@ -13,8 +13,29 @@ class DefaultController extends Controller
      */
     public function indexAction(Request $request)
     {
+        $em = $this->getDoctrine()->getManager();
+        $query = $em->createQuery(
+            'SELECT c.post, COUNT(c) as qty
+            FROM BlogBundle:Comment c
+            GROUP BY c.post'
+        );
+
+        $allComments = $query->getResult();       
+
+        $comments = array();
+        if (count($allComments)) {
+            foreach($allComments as $comment) {
+                $comments[$comment["post"]] = $comment["qty"];
+            }
+        }
+        
         $this->saveVisit($request, "home");
-        return $this->render('BlogBundle:Default:index.html.twig');
+        return $this->render(
+            'BlogBundle:Default:index.html.twig',
+            array(
+                "comments" => $comments
+            )    
+        );
     }
     
     /**
@@ -22,6 +43,10 @@ class DefaultController extends Controller
      */
     public function postAction(Request $request, $id)
     {
+        $comments = $this->getDoctrine()
+                         ->getRepository('BlogBundle:Comment')
+                         ->findByPost($id);        
+        
         $this->saveVisit($request, $id);
         
         $viewName = $this->getPostViewById($id);
@@ -30,8 +55,46 @@ class DefaultController extends Controller
             return $this->redirect($this->generateUrl('blog'));
         }
         
-        return $this->render($viewName);
+        return $this->render(
+            $viewName, 
+            array(
+                'post' => $id,
+                'comments' => $comments
+            )
+        );
     }
+    
+    /**
+     * @Route("/blog/comment", name="blog_comment_new")
+     */
+    public function commentAction(Request $request)
+    {
+        $nickname = $request->get("nickname");
+        $userComment = $request->get("comment");
+        $post = $request->get("post");
+        
+        if (
+            (strlen($nickname) <= 30) &&
+            (strlen($userComment) <= 255) &&    
+            !is_null($post)    
+        ) {
+            $comment = new \BlogBundle\Entity\Comment();
+            $comment->setIp($request->getClientIp());
+            $comment->setPost($post);
+            $comment->setNickname($nickname);
+            $comment->setComment($userComment);
+
+            $em = $this->getDoctrine()->getManager();
+
+            // tells Doctrine you want to (eventually) save the Product (no queries yet)
+            $em->persist($comment);
+
+            // actually executes the queries (i.e. the INSERT query)
+            $em->flush();          
+        }
+        
+        return $this->redirect($this->generateUrl('blog_post', array('id' => $post)), 301);
+    }    
     
     protected function getPostViewById($id)
     {

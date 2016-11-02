@@ -20,20 +20,34 @@
                     <div class="clearfix"></div>
                 </li>
             </ul>
-                    
-            <!--        
-            <div class="content-form">
-                <h3>Leave a comment</h3>
-                <form>
-                    <input type="text" placeholder="Name" required/>
-                    <input type="text" placeholder="Email" required/>
-                    <input type="text" placeholder="Phone" required/>
-                    <textarea placeholder="Message"></textarea>
-                    <input type="submit" value="SEND"/>
+                
+            <div class="content-form">        
+                <h3>Dej&aacute; tu comentario!</h3>
+                <form action="{{ path('blog_comment_new') }}" method="post">
+                    <input type="hidden" name="post" value="{{post}}"/>
+                    <input type="text" name="nickname" placeholder="Nickname" required/>
+                    <textarea name="comment" placeholder="Comentario"></textarea>
+                    <input type="submit" value="ENVIAR"/>
                 </form>
             </div>
-            -->
             
+            <div class="content-form" style="margin-top:20px;">        
+                <h3>Comentarios</h3>        
+                <ul class="comment-list">
+                    {% for comment in comments %}
+                        <li>
+                            <div class="desc">
+                                <p>
+                                    <h5 class="post-author_head">{{comment.nickname}}</h5>
+                                    {{comment.comment}}
+                                </p>
+                            </div>
+
+                            <div class="clearfix"></div>
+                        </li>
+                    {% endfor %}                
+                </ul>
+            </div>
         </div>
         {{ include('BlogBundle::Default/right.html.twig') }}
     </div>
