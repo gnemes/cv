@@ -52,13 +52,13 @@
     <p>
         Entonces vamos al modelo de productos:
     </p>
-    <pre><code class="Bash">
+    <pre><code class="language-bash">
         \Magento\Catalog\Model\Product
     </code></pre>
     <p>
         Y vemos que tiene un metodo getName():
     </p>
-    <pre><code class="PHP">
+    <pre><code class="language-php">
     public function getName()
     {
         return $this->_getData(self::NAME);
@@ -68,7 +68,7 @@
         Genial! En este punto, es muy claro que podr&iacute;amos usar un Plugin sin ning&uacute;n problema,
         pero como estamos analizando las Preferences, hag&aacute;moslo con un rewrite. Creamos un modulo bien simple:
     </p>
-    <pre><code class="Bash">
+    <pre><code class="language-bash">
     Gnemes
         └── Blog
             ├── etc
@@ -85,7 +85,7 @@
         Como somos desarrolladores prolijos, vamos a crear la preferencia usando la interfaz del modelo
         de productos, entonces completamos nuestro <strong>di.xml</strong> con lo siguiente:
     </p>
-    <pre><code class="XML">
+    <pre><code class="language-xml">
     &lt;?xml version="1.0"?&gt;
     &lt;config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
             xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd"&gt;
@@ -98,7 +98,7 @@
     <p>
         Y el c&oacute;digo de nuestra nueva clase Product es bastante simple:
     </p>
-    <pre><code class="PHP">
+    <pre><code class="language-php">
     namespace Gnemes\Blog\Rewrite\Magento\Catalog\Model;
 
     class Product
@@ -154,14 +154,14 @@
         se inicializa la collection con la definici&oacute;n del model y el resourceModel del cual
         va a obtener los datos y popular objetos. En el caso de nuestro ejemplo la collection es:
     </p>
-    <pre><code class="Bash">
+    <pre><code class="language-bash">
     \Magento\Catalog\Model\ResourceModel\Product\Collection
     </code></pre>    
     <p>
         y el c&oacute;digo del metodo <strong>_construct()</strong> es:
     </p>
     
-    <pre><code class="PHP">
+    <pre><code class="language-php">
     /**
      * Initialize resources
      *
@@ -180,13 +180,13 @@
     <p>
         Si pudi&eacute;semos reemplazar:
     </p>
-    <pre><code class="Bash">
+    <pre><code class="language-bash">
     Magento\Catalog\Model\Product
     </code></pre>    
     <p>
         por
     </p>
-    <pre><code class="Bash">
+    <pre><code class="language-bash">
     Gnemes\Blog\Rewrite\Magento\Catalog\Model\Product
     </code></pre>
     <p>
@@ -202,7 +202,7 @@
         Los Factories autogenerados por Magento 2, son el otro punto en donde me tope con el mismo problema.
         El ObjectManager permite que se inyecte en un constructor algo como lo siguiente:
     </p>
-    <pre><code class="PHP">
+    <pre><code class="language-php">
     public function __construct(
         \Magento\Catalog\Model\ProductFactory $productFactory
     ){
@@ -214,7 +214,7 @@
         ¿Que nos permite esto? Crear N objetos <strong>\Magento\Catalog\Model\Product</strong>
         simplemente pidi&eacute;ndole al Factory que lo cree:
     </p>
-    <pre><code class="PHP">
+    <pre><code class="language-php">
     public function miMetodo()
     {
         ...
@@ -225,7 +225,7 @@
     <p>
         Muy f&aacute;cil!! Pero... cuando voy a buscar la clase factory a:
     </p>
-    <pre><code class="Bash">
+    <pre><code class="language-bash">
     module-catalog
         └── Model
             └── ProductFactory.php
@@ -234,7 +234,7 @@
         No existe! Pero el sitio anda... ¿De donde sali&oacute; la clase?. Magento 2 crea autom&aacute;ticamente los Factories
         necesarios dentro de la carpeta:
     </p>
-    <pre><code class="Bash">
+    <pre><code class="language-bash">
     var
      └── Generation
            └── &lt;Namespace_de_la_clase&gt;
@@ -242,7 +242,7 @@
     <p>
         Si vemos el c&oacute;digo de la clase ProductFactory autogenerada por Magento:
     </p>
-    <pre><code class="PHP">
+    <pre><code class="language-php">
     namespace Magento\Catalog\Model;
 
     /**
@@ -292,7 +292,7 @@
         vemos que el problema para nuestra situaci&oacute;n, es que Magento crea el Factory
         colocando como <strong>$instanceName</strong> la clase directamente, y no la interfaz que implementa.
     </p>
-    <pre><code class="PHP">
+    <pre><code class="language-php">
         $instanceName = '\\Magento\\Catalog\\Model\\Product'
     </code></pre>    
     <p>
@@ -303,7 +303,7 @@
         hay que cambiar la preference en el <strong>di.xml</strong> para que sea
         sobre la clase directamente, de la siguiente forma:
     </p>
-    <pre><code class="XML">
+    <pre><code class="language-xml">
     &lt;?xml version="1.0"?&gt;
     &lt;config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
             xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd"&gt;

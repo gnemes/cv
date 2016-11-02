@@ -19,9 +19,7 @@
         <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
         <!--end slider -->
 
-        <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.7.0/styles/default.min.css">
-        <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.7.0/highlight.min.js"></script>
-        <script>hljs.initHighlightingOnLoad();</script>        
+        <link href="{{ asset('css/prism.css') }}" rel='stylesheet' type='text/css' />
         
         {% block styles %}
         {% endblock %} 
@@ -52,5 +50,7 @@
             </div>
         </div>            
         {% endblock %}
+        
+        <script src="{{ asset('js/prism.js') }}"></script>
     </body>
 </html>
