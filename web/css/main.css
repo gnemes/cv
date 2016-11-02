@@ -105,6 +105,11 @@ h1, h2, h3, h4, h5, h6 {
     height: 225px;
     margin: 0 20px 20px 0;
 }
+#page-blog {
+    padding: 75px 0;
+    background: #EE6363;
+    color: #fff;
+}
 #page-skills {
     padding: 75px 0;
     background: #f7f7f7;

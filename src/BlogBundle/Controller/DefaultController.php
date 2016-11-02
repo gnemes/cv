@@ -21,6 +21,11 @@ class DefaultController extends Controller
     public function postAction($id)
     {
         $viewName = $this->getPostViewById($id);
+        
+        if ($viewName == '') {
+            return $this->redirect($this->generateUrl('blog'));
+        }
+        
         return $this->render($viewName);
     }
     

@@ -83,7 +83,7 @@
     </code></pre>
     <p>
         Como somos desarrolladores prolijos, vamos a crear la preferencia usando la interfaz del modelo
-        de productos, entonces compleamos nuestro <strong>di.xml</strong> con lo siguiente:
+        de productos, entonces completamos nuestro <strong>di.xml</strong> con lo siguiente:
     </p>
     <pre><code class="XML">
     &lt;?xml version="1.0"?&gt;
@@ -239,5 +239,101 @@
      └── Generation
            └── &lt;Namespace_de_la_clase&gt;
     </code></pre>
+    <p>
+        Si vemos el codigo de la clase ProductFactory autogenerada por magento:
+    </p>
+    <pre><code class="PHP">
+    namespace Magento\Catalog\Model;
+
+    /**
+     * Factory class for @see \Magento\Catalog\Model\Product
+     */
+    class ProductFactory
+    {
+        /**
+         * Object Manager instance
+         *
+         * @var \Magento\Framework\ObjectManagerInterface
+         */
+        protected $_objectManager = null;
+
+        /**
+         * Instance name to create
+         *
+         * @var string
+         */
+        protected $_instanceName = null;
+
+        /**
+         * Factory constructor
+         *
+         * @param \Magento\Framework\ObjectManagerInterface $objectManager
+         * @param string $instanceName
+         */
+        public function __construct(\Magento\Framework\ObjectManagerInterface $objectManager, $instanceName = '\\Magento\\Catalog\\Model\\Product')
+        {
+            $this->_objectManager = $objectManager;
+            $this->_instanceName = $instanceName;
+        }
+
+        /**
+         * Create class instance with specified parameters
+         *
+         * @param array $data
+         * @return \Magento\Catalog\Model\Product
+         */
+        public function create(array $data = array())
+        {
+            return $this->_objectManager->create($this->_instanceName, $data);
+        }
+    }    
+    </code></pre>
+    <p>
+        vemos que el problema para nuestra situacion, es que magento crea el Factory
+        colocando como <strong>$instanceName</strong> la clase directamente, y no la interfaz que implementa.
+    </p>
+    <pre><code class="PHP">
+        $instanceName = '\\Magento\\Catalog\\Model\\Product'
+    </code></pre>    
+    <p>
+        <h4>¿Como hacer que funcione?</h4>
+    </p>
+    <p>
+        Bien, llegados a este punto, para hacer que funcione el rewrite de la clase
+        hay que cambiar la preference en el <strong>di.xml</strong> para que sea
+        sobre la clase directamente, de la siguiente forma:
+    </p>
+    <pre><code class="XML">
+    &lt;?xml version="1.0"?&gt;
+    &lt;config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+            xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd"&gt;
+
+        &lt;preference for="Magento\Catalog\Model\Product"
+                    type="Gnemes\Blog\Rewrite\Magento\Catalog\Model\Product" /&gt;
+
+    &lt;/config&gt;
+    </code></pre>  
+    <p>
+        <h4>Conclusion</h4>
+    </p>
+    <p>
+        Como comente al comienzo del articulo, este post tenia como objetivo unicamente
+        ilustrar un escenario en el cual hay que andar con cuidado. Magento 2 se encuentra
+        en un proceso evolutivo y estas cosas pueden ir variando, pero de momento
+        esto es algo con lo que nos vamos a encontrar.
+    </p>
+    <p>
+        En algunos pasajes del post me tome el atrevimiento de proponer cambios
+        al core de Magento 2, para que contemple estos casos puntuales. Las sugerencias
+        que hice no son LA solucion a los problemas. La solucion a estos casos
+        requiere de un analisis mucho mas profundo. No es posible hacer cambios 
+        en el core del framework sin analizar que sucede el resto del sistema. Por ejemplo
+        los test unitarios se verian afectados si se modifica la forma en que el
+        ObjectManager resuelve las dependencias.
+    </p>
+    <p>
+        Espero que les haya servido a quienes se estuvieron rompiendo la cabeza con
+        esto o a quienes se la podian llegar a romper :)
+    </p>
 </div>
 {% endblock %}    
