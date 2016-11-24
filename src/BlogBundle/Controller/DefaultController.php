@@ -102,6 +102,9 @@ class DefaultController extends Controller
             case 1:
                 $view = 'BlogBundle:Default:posts/interfacepreference.html.twig';
                 break;
+            case 2:
+                $view = 'BlogBundle:Default:posts/sessionissue.html.twig';
+                break;
             default:
                 $view = '';
                 break;

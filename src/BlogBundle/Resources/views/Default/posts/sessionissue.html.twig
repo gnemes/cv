@@ -1,0 +1,283 @@
+{% extends 'BlogBundle:Default:posts/base.html.twig' %}
+
+{% block post %}
+<div class="single-grid">
+    <img src="{{ asset('img/posts/sessionissue.png') }}" alt="Session Issue"/>
+    <p>
+        <h3>Magento 2 - Session Issue</h3>
+    </p>
+    <p>
+        Como contaba en el preview de este post, hace unas semanas me toc&oacute;
+        implementar algunos features para robustecer las pol&iacute;ticas de 
+        seguridad de Magento 2.<br/>
+        La implementaci&oacute;n de dichos features fue relativamente sencilla,
+        pero tr&aacute;s testear el desarrollo manualmente durante un par de d&iacute;as
+        me encontr&eacute; con un extraño bug: si borraba el contenido de <strong>var/cache</strong>
+        e intentaba loguearme al Admin de Magento, este me redirig&iacute;a al 
+        mismo formulario de login sin ning&uacute;n mensaje de error.
+    </p>
+    <p>
+        El objetivo de este post, es precisamente contarles cual era el bug,
+        por qu&eacute; se estaba produciendo, y como lo solucion&eacute;.
+    </p>
+    <p>
+        <h4>Contexto</h4>
+    </p>
+    <p>
+        Antes que nada, quiero ponerlos un poco en contexto. Dentro de los features
+        que me tocaron desarrollar, uno particular consistia en modificar la clase
+        User de Magento. El objetivo de esto era agregar algunos repositorios
+        para manejar la gesti&oacute;n de funcionalidad agregada.<br/>
+        Lo primero que hice fue crear la clase para el rewrite:
+    </p>
+    <pre><code class="language-php">
+    // app/code/Gnemes/Security/Rewrite/Magento/User/Model/User.php
+    namespace Gnemes\Security\Rewrite\Magento\User\Model;
+
+    /**
+     * @var \Gnemes\Security\Api\PasswordHistoryRepositoryInterface
+     */
+    protected $passwordHistoryRepository;
+
+    class User
+        extends \Magento\User\Model\User
+        implements \Gnemes\Security\Api\Data\UserInterface,
+                   \Magento\Backend\Model\Auth\Credential\StorageInterface
+    {
+        public function __construct(
+            \Gnemes\Security\Api\PasswordHistoryRepositoryInterface $passwordHistoryRepository,
+            \Magento\Framework\Model\Context $context,
+            \Magento\Framework\Registry $registry,
+            \Magento\User\Helper\Data $userData,
+            \Magento\Backend\App\ConfigInterface $config,
+            \Magento\Framework\Validator\DataObjectFactory $validatorObjectFactory,
+            \Magento\Authorization\Model\RoleFactory $roleFactory,
+            \Magento\Framework\Mail\Template\TransportBuilder $transportBuilder,
+            \Magento\Framework\Encryption\EncryptorInterface $encryptor,
+            \Magento\Store\Model\StoreManagerInterface $storeManager,
+            UserValidationRules $validationRules,
+            \Magento\Framework\Model\ResourceModel\AbstractResource $resource = null,
+            \Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
+            array $data = []
+        )
+        {
+            $this->passwordHistoryRepository = $passwordHistoryRepository;
+
+            parent::__construct(
+                $context,
+                $registry,
+                $userData,
+                $config,
+                $validatorObjectFactory,
+                $roleFactory,
+                $transportBuilder,
+                $encryptor,
+                $storeManager,
+                $validationRules,
+                $resource,
+                $resourceCollection,
+                $data
+            );
+        }
+        ...
+    }   
+    </code></pre>
+    <p>
+        Obviamente lo anterior es solo una s&iacute;ntesis de la clase final, 
+        pero para los fines de este post es suficiente. <br/>
+        De igual forma, voy a omitir todos los detalles del m&oacute;dulo en si,
+        el di.xml, etc, ya que no aportan al ejemplo.
+    </p>
+    <p>
+        <h4>S&iacute;ntomas</h4>
+    </p>
+    <p>
+        El primer s&iacute;ntoma fue el que comente al comienzo: cuando borraba
+        el contenido de <strong>var/cache</strong> e intentaba loguearme al Admin
+        de Magento, era redirigido al formulario de login sin ning&uacute;n 
+        mensaje de error.<br/>
+        Al ahondar un poco en este error, descubr&iacute; que durante el proceso
+        de login, al utilizar mi Rewrite, se perdian objetos dentro de la session.
+    </p>
+    <p>
+        <h4>Session en Magento 2</h4>
+    </p>
+    <p>
+        Usualmente las sessions se guardan al finalizar el script, no es algo que
+        por lo general nos incumba demasiado.<br/>
+        Pero, el problema con esto, es que los datos de session se lockean de modo
+        de no tener escritura concurrente sobre los mismos. Si se lanzan varios
+        scripts en paralelo, donde todos utilizan session, entonces vamos a notar
+        que se comienzan a encolar esperando que la session se libere para poder
+        continuar.<br/>
+        Para evitar esto, PHP provee la funci&oacute;n nativa <strong>session_write_close()</strong>.
+        De esta forma, inmediatamente al terminar de escribir en session se puede
+        cerrar la misma, para que otro script pueda utilizarla y mejorar los tiempos
+        de respuesta.<br/>
+        Magento 2 precisamente hace uso de esta funci&oacute;n dentro de lo que
+        es la gesti&oacute;n de las sessions.
+    </p>
+    <p>
+        <h4>session_start() y session_write_close()</h4>
+    </p>
+    <p>
+        La definici&oacute;n exacta de ambas funciones las podemos encontrar en:
+    </p>
+    <a target="_blank" href="http://php.net/manual/en/function.session-start.php">
+    http://php.net/manual/en/function.session-start.php        
+    </a>
+    <p>
+        y:
+    </p>
+    <a target="_blank" href="http://php.net/manual/en/function.session-write-close.php">
+    http://php.net/manual/en/function.session-write-close.php
+    </a>
+    <p>
+        respectivamente.<br/>
+        B&aacute;sicamente, al llamar a <strong>session_write_close()</strong>
+        el contenido de $_SESSION se serializa utilizando <strong>serialize()</strong> 
+        y se guarda para que al llamar a <strong>session_start()</strong> se revierta el proceso
+        utilizando <strong>unserialize()</strong> y se regeneren los objetos.
+    </p>
+    <p>
+        <h4>Y comienza la magia: __sleep() y __wakeup()</h4>
+    </p>
+    <p>
+        En este punto, es donde ocurre la magia. PHP provee a las clases de dos
+        m&eacute;todos m&aacute;gicos: <strong>__sleep()</strong> y <strong>__wakeup()</strong>.
+        Cuando se llama al m&eacute;todo <strong>serialize()</strong> sobre un objeto,
+        PHP busca si el mismo posee un método <strong>__sleep()</strong> y en caso
+        afirmativo lo invoca.<br/>
+        De igual forma, al llamarse a <strong>unserialize()</strong> PHP busca si
+        existe el m&eacute;todo <strong>__wakeup()</strong> y lo invoca. <br/>
+        Pero... ¿¿Para qu&eacute; se utilizan??<br/>
+        <strong>__sleep()</strong> debe retornar un array de strings que indica
+        el nombre de todos los atributos del objeto que deben ser serializados.
+        El objetivo de esta funci&oacute;n es poder ejecutar tareas de commit y 
+        limpieza de objetos muy grandes que no requieren ser serializados por completo.<br/>
+        <strong>__wakeup()</strong> tiene por objetivo reconstruir aquellas partes
+        del objeto que no fueron serializadas.
+    </p>
+    <p>
+        <h4>El bug!</h4>
+    </p>
+    <p>
+        Cuando Magento 2 intenta serializar el objeto para almacenarlo en session,
+        y por alg&uacute;n motivo la serializaci&oacute;n falla, es dificil ver
+        el error (en mi caso, no veia error alguno!). Esto genera que se pierda el
+        objeto entre session_start() y session_start().<br/>
+        En el caso puntual de mi m&oacute;dulo, el problema era:
+    </p>
+    <pre><code class="language-php">
+        /**
+         * @var \Gnemes\Security\Api\PasswordHistoryRepositoryInterface
+         */
+        protected $passwordHistoryRepository;
+    </code></pre>    
+    <p>
+        que no pod&iacute;a ser serializado. <br/>
+        Para solucionarlo, simplemente tuve que agregar al método __sleep() que ignore
+        dicho atributo al serializar el objeto, y al método __wakeup() que regenere
+        el objeto al des-serializar. La clase resultante luce as&iacute;:
+    </p>
+    <pre><code class="language-php">
+        // app/code/Gnemes/Security/Rewrite/Magento/User/Model/User.php
+        namespace Gnemes\Security\Rewrite\Magento\User\Model;
+
+        /**
+         * @var \Gnemes\Security\Api\PasswordHistoryRepositoryInterface
+         */
+        protected $passwordHistoryRepository;
+
+        class User
+            extends \Magento\User\Model\User
+            implements \Gnemes\Security\Api\Data\UserInterface,
+                       \Magento\Backend\Model\Auth\Credential\StorageInterface
+        {
+            public function __construct(
+                \Gnemes\Security\Api\PasswordHistoryRepositoryInterface $passwordHistoryRepository,
+                \Magento\Framework\Model\Context $context,
+                \Magento\Framework\Registry $registry,
+                \Magento\User\Helper\Data $userData,
+                \Magento\Backend\App\ConfigInterface $config,
+                \Magento\Framework\Validator\DataObjectFactory $validatorObjectFactory,
+                \Magento\Authorization\Model\RoleFactory $roleFactory,
+                \Magento\Framework\Mail\Template\TransportBuilder $transportBuilder,
+                \Magento\Framework\Encryption\EncryptorInterface $encryptor,
+                \Magento\Store\Model\StoreManagerInterface $storeManager,
+                UserValidationRules $validationRules,
+                \Magento\Framework\Model\ResourceModel\AbstractResource $resource = null,
+                \Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
+                array $data = []
+            )
+            {
+                $this->passwordHistoryRepository = $passwordHistoryRepository;
+
+                parent::__construct(
+                    $context,
+                    $registry,
+                    $userData,
+                    $config,
+                    $validatorObjectFactory,
+                    $roleFactory,
+                    $transportBuilder,
+                    $encryptor,
+                    $storeManager,
+                    $validationRules,
+                    $resource,
+                    $resourceCollection,
+                    $data
+                );
+            }
+            
+            /**
+             * Init not serializable fields
+             *
+             * @return void
+             */
+            public function __wakeup()
+            {
+                parent::__wakeup();
+                $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+                $this->passwordHistoryRepository = $objectManager->get(
+                    'Gnemes\Security\Api\PasswordHistoryRepositoryInterface'
+                );
+            }
+
+            /**
+             * @return string[]
+             */
+            public function __sleep()
+            {
+                $properties = parent::__sleep();
+                $response = array_diff(
+                    $properties,
+                    [
+                        'passwordHistoryRepository'
+                    ]
+                );
+
+                return $response;
+            } 
+
+            ...
+        }   
+    </code></pre>
+    <p>
+        Y resuelto el issue!
+    </p>
+    <p>
+        Si bien la resoluci&oacute;n del bug resulta sencilla, el proceso de 
+        debuggin para entender efectivamente que era lo que estaba sucediendo, me
+        tom&oacute; m&aacute;s de una semana =(<br/>
+        Por ello, me pareci&oacute; importante compartirlo, para aquellos que 
+        esten sufriendo problemas similares y no tengan idea por donde comenzar,
+        cuenten con un punto de inicio.
+    </p>
+    <p>
+        Como nota al margen, este caso, en los meses que llevo trabajando
+        con Magento 2, es el &uacute;nico en donde instanciar el <strong>objectManger</strong>
+        directamente me fue absolutamente necesario.        
+    </p>
+</div>
+{% endblock %}    

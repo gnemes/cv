@@ -1,0 +1,25 @@
+<div class="content-grid-info">
+    <img src="{{ asset('img/posts/sessionissue.png') }}" alt="Session Issue"/>
+    <div class="post-info">
+        <h4>
+            <a href="{{ path('blog_post', {'id': 2}) }}">
+                Magento 2 - Session issue
+            </a>  
+            {% if comments.2 is defined %}
+            {%    set c = comments.2 %}    
+            {% else %}
+            {%    set c = 0 %}    
+            {% endif %}    
+            2016/11/24 - {{c}} comentarios
+        </h4>
+        <p>
+            Hace unas semanas, en un proyecto me toc&oacute; incorporar ciertos
+            features para robustecer las pol&iacute;ticas de seguridad de Magento 2.
+            Los features salieron con relativa facilidad, pero despu&eacute;s de 
+            probarlos durante un par de d&iacute;as, descubr&iacute; un bug: cuando
+            borraba var/cache e intentaba loguearme al admin de Magento, sin mostrar
+            ning&uacute;n mensaje de error, me redirig&iacute;a al login...
+        </p>
+        <a href="{{ path('blog_post', {'id': 2}) }}"><span></span>LEER MAS</a>
+    </div>
+</div>
