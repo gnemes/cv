@@ -1,5 +1,13 @@
 {% extends 'BlogBundle:Default:posts/base.html.twig' %}
 
+{% block socialContent %}
+<meta property="og:title" content="Magento 2 - Preferencias sobre interfaces" />
+<meta property="og:type" content="article" />
+<meta property="og:article:author" content="German Nemes" />
+<meta property="og:url" content="http://gnemes.com.ar/blog/post/1" />
+<meta property="og:image" content="http://gnemes.com.ar/img/posts/preference.jpg" />    
+{% endblock %}
+
 {% block post %}
 <div class="single-grid">
     <img src="{{ asset('img/posts/preference.jpg') }}" alt="Preferencias sobre interfaces"/>
